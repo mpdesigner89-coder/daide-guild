@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đại Đế • Quản lý bang hội</title>
+
+
+
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">ĐĐ</div><div><div class="brand-name">ĐẠI ĐẾ</div><div class="brand-sub">GUILD MANAGEMENT • VLTK 2.0</div></div></div>
+      <div>
+        <div class="nav-label">Tổng quan</div>
+        <nav class="nav" aria-label="Điều hướng chính">
+          <button class="active" data-page="dashboard"><span class="nav-icon">▦</span> Bảng điều khiển</button>
+          <button data-page="attendance"><span class="nav-icon">✓</span> Chấm công Boss</button>
+          <button data-page="ctc"><span class="nav-icon">⚔</span> Chấm công CTC</button>
+          <button data-page="members"><span class="nav-icon">♙</span> Thành viên</button>
+          <button data-page="payroll"><span class="nav-icon">◈</span> Bảng lương</button>
+          <button data-page="finance"><span class="nav-icon">▤</span> Thu chi & quỹ</button>
+          <button data-page="calendar"><span class="nav-icon">▦</span> Lịch hoạt động</button>
+          <button data-page="settings"><span class="nav-icon">⚙</span> Quy định & hướng dẫn</button>
+        </nav>
+      </div>
+      <div class="sidebar-bottom"><strong>ⓘ Bản thử nghiệm giao diện</strong>Dữ liệu hiện được giữ trong bộ nhớ của trang. Tải lại trang sẽ khôi phục dữ liệu mẫu. Chưa có đăng nhập hoặc đồng bộ nhiều máy.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">Hệ thống điều hành bang hội</div><h1 id="pageTitle">Bảng điều khiển</h1><div class="subtitle" id="pageSubtitle">Theo dõi chấm công, quỹ lương và tiến độ hoạt động trong tuần.</div></div>
+        <div class="top-actions">
+          <select class="select" id="weekSelect" aria-label="Chọn tuần"><option value="2026-W43">Tuần 43 · 19–25/10/2026</option><option value="2026-W42">Tuần 42 · 12–18/10/2026</option><option value="2026-W41">Tuần 41 · 05–11/10/2026</option></select>
+          <button class="btn" id="helpBtn">ⓘ Hướng dẫn</button>
+          <button class="btn" id="loginBtn">⇥ Đăng nhập</button>
+          <button class="btn btn-primary" id="quickAddBtn">＋ Thêm thành viên</button>
+        </div>
+      </header>
+
+      
+      <section class="page active" id="page-dashboard">
+        <div class="hero"><div class="hero-copy"><h2>Đoàn kết tạo nên Đại Đế.</h2><p>Một nơi quản lý hoạt động bang phái rõ ràng: điểm danh, theo dõi KPI, kiểm soát quỹ và xác nhận phát lương — mọi thứ nằm trong một bảng điều khiển.</p><div class="hero-tags"><span class="hero-tag">● Tuần đang xem: 19–25/10</span><span class="hero-tag">✦ KPI Boss: tối thiểu 12/28</span><span class="hero-tag">⌁ 4 khung giờ Boss mỗi ngày</span></div></div><div class="hero-mark">ĐĐ</div></div>
+        <div class="kpis" id="dashboardKpis"></div>
+        <div class="two-col">
+          <div class="panel"><div class="panel-head"><div><h3>Tiến độ hoạt động trong tuần</h3><small>Tiến độ được tính trên các ô chấm công đã xác nhận.</small></div><span class="pill blue">Tuần hiện tại</span></div><div id="progressOverview"></div></div>
+          <div class="panel"><div class="panel-head"><div><h3>Quỹ theo bang</h3><small>Số dư demo để minh họa bố cục.</small></div><button class="btn btn-small" data-goto="finance">Xem thu chi →</button></div><div class="guild-list" id="guildOverview"></div></div>
+        </div>
+        <div class="section-head"><div><h2>Thành viên cần theo dõi</h2><p>Ưu tiên kiểm tra KPI và tình trạng nhận lương.</p></div><button class="btn btn-small" data-goto="members">Danh sách thành viên →</button></div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Thành viên</th><th>Bang</th><th>Công Boss</th><th>KPI</th><th>Trạng thái lương Boss</th></tr></thead><tbody id="attentionTable"></tbody></table></div></div>
+      </section>
+
+      
+      <section class="page" id="page-attendance">
+        <div class="notice"><strong>Quy tắc mẫu:</strong> 4 khung giờ/ngày (10:00, 15:00, 19:30, 21:30), tổng 28 công/tuần. KPI đạt khi có ít nhất 12 công; điều kiện này không nhân theo số tài khoản.</div>
+        <div class="section-head"><div><h2>Chấm công Boss theo ngày</h2><p>Chọn ngày, sau đó bấm khung giờ để bật/tắt dấu công cho thành viên.</p><div class="upload-row" style="margin-top:10px"><button class="btn btn-small" id="bossUploadBtn">▧ Tải ảnh chấm công</button><input id="bossImageInput" type="file" accept="image/*" hidden><small class="muted">Ảnh sẽ cần OCR và người có quyền xác nhận trước khi ghi công.</small></div></div><select class="select" id="bossDay"><option value="0">Thứ Hai</option><option value="1">Thứ Ba</option><option value="2">Thứ Tư</option><option value="3">Thứ Năm</option><option value="4">Thứ Sáu</option><option value="5">Thứ Bảy</option><option value="6">Chủ Nhật</option></select></div>
+        <div class="panel"><div class="panel-head"><div><h3 id="bossDayTitle">Thứ Hai · Khung giờ Boss</h3><small>Mỗi lần bấm sẽ cập nhật ngay số công và KPI trong bản mẫu.</small></div><span class="pill gold" id="bossMarkedCount">0 dấu công</span></div><div class="slots" id="bossSlots"></div></div>
+        <div class="section-head"><div><h2>Bảng công tuần</h2><p>Đếm số khung giờ đã đánh dấu của từng thành viên.</p></div><div class="filterbar"><input class="search" id="attendanceSearch" placeholder="Tìm tên nhân vật / Zalo..."></div></div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Thành viên</th><th>Bang</th><th>Công Boss</th><th>/28</th><th>KPI</th><th>Thao tác</th></tr></thead><tbody id="attendanceTable"></tbody></table></div></div>
+        <div class="notice warn">Tự động nhận diện ảnh chụp màn hình chưa được kết nối trong bản này. Khi phát triển backend, ảnh OCR cần có bước người chấm công xác nhận tên khớp trước khi ghi công.</div>
+      </section>
+
+      
+      <section class="page" id="page-ctc">
+        <div class="notice"><strong>CTC:</strong> Bản mẫu sử dụng 3 buổi tối Thứ Sáu, Thứ Bảy và Chủ Nhật. Công CTC và quỹ lương CTC được theo dõi riêng, không cộng vào KPI Boss.</div>
+        <div class="section-head"><div><h2>Lịch chấm công CTC</h2><p>Bấm vào buổi tương ứng để chọn người có mặt.</p><div class="upload-row" style="margin-top:10px"><button class="btn btn-small" id="ctcUploadBtn">▧ Tải ảnh chấm công CTC</button><input id="ctcImageInput" type="file" accept="image/*" hidden><small class="muted">Ảnh OCR cần được duyệt trước khi cập nhật công CTC.</small></div></div></div>
+        <div class="attendance-days" id="ctcDays"></div>
+        <div class="section-head"><div><h2>Danh sách công CTC</h2><p>Có thể đánh dấu hoặc bỏ dấu công của từng thành viên.</p></div><div class="filterbar"><input class="search" id="ctcSearch" placeholder="Tìm thành viên..."></div></div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Thành viên</th><th>Bang</th><th>Công CTC</th><th>HSL CTC</th><th>Thao tác</th></tr></thead><tbody id="ctcTable"></tbody></table></div></div>
+      </section>
+
+      
+      <section class="page" id="page-members">
+        <div class="section-head"><div><h2>Danh bạ thành viên</h2><p>Mỗi người có một hồ sơ; tài khoản/nhân vật được ghi ở phần mô tả.</p></div><button class="btn btn-primary" id="addMemberBtn">＋ Thêm thành viên</button></div>
+        <div class="panel"><div class="filterbar"><input class="search" id="memberSearch" placeholder="Tìm tên Zalo, acc chính/phụ, môn phái, chức vụ..."><select class="select" id="guildFilter"><option value="all">Tất cả bang</option><option>Đại Đế</option><option>Nhị Đế</option><option>Tam Đế</option><option>Chấp Niệm</option></select><span class="pill gray" id="memberCount">0 thành viên</span></div><div class="table-wrap"><table><thead><tr><th>Thành viên / acc chính</th><th>Môn phái</th><th>Bang chính</th><th>Chức vụ</th><th>Kéo xe</th><th>HSL Boss</th><th>HSL CTC</th><th>Thao tác</th></tr></thead><tbody id="memberTable"></tbody></table></div></div>
+        <div class="notice">Lưu ý thiết kế dữ liệu: nếu một thành viên có nhiều nhân vật hoặc ở nhiều bang, bản triển khai thật nên lưu từng tài khoản thành bản ghi con của hồ sơ thành viên, rồi quy định rõ công/hệ số được tính theo người hay theo tài khoản.</div>
+      </section>
+
+      
+      <section class="page" id="page-payroll">
+        <div class="notice"><strong>Công thức Boss mẫu:</strong> Quỹ Boss = doanh thu đấu giá − chi phí Boss đã duyệt. Đơn giá công = quỹ Boss / tổng công đã nhân hệ số của người đạt KPI. KPI dùng số nguyên ≥12/28, không dùng số phần trăm đã làm tròn.</div>
+        <div class="section-head"><div><h2>Bảng lương tuần</h2><p>Ví dụ này dùng dữ liệu giả lập; chưa phải bảng lương chính thức.</p></div><button class="btn" id="payrollExportBtn">⇩ Xuất CSV</button></div>
+        <div class="kpis" id="payrollKpis"></div>
+        <div class="panel" style="margin-top:15px"><div class="filterbar"><input class="search" id="payrollSearch" placeholder="Tìm thành viên..."><select class="select" id="payTypeFilter"><option value="all">Boss + CTC</option><option value="boss">Lương Boss</option><option value="ctc">Lương CTC</option></select><label class="muted" for="ctcPayrollMode">Chế độ lương CTC</label><select class="select" id="ctcPayrollMode"><option value="separate">Tách riêng 4 bang</option><option value="combined">Gộp quỹ 4 bang</option></select></div><div class="notice">Lương Boss hiển thị bằng Kim; lương CTC hiển thị bằng Vạn. Phụ cấp nhập thủ công theo Kim hoặc Vạn. Bấm “Xem công” để mở/ẩn từng khung giờ Boss.</div><div class="table-wrap"><table><thead><tr><th>Thành viên</th><th>Công Boss</th><th>KPI Boss</th><th>Lương Boss</th><th>Công CTC</th><th>Lương CTC (Vạn)</th><th>Phụ cấp</th><th>Xác nhận Boss</th><th>Xác nhận CTC</th></tr></thead><tbody id="payrollTable"></tbody></table></div></div>
+        <div class="notice warn">Trong bản thật, người phụ trách phát lương chỉ được đổi trạng thái “Đã nhận/Chưa nhận”, không được sửa tiền lương. Quyền này phải được khóa ở backend, không chỉ ẩn nút trên giao diện.</div>
+      </section>
+
+      
+      <section class="page" id="page-calendar">
+        <div class="section-head"><div><h2>Lịch hoạt động bang hội</h2><p>Theo dõi lịch Boss và CTC theo ngày, khung giờ; có thể thêm hoạt động riêng.</p></div><button class="btn btn-primary" id="addCalendarEvent">＋ Thêm hoạt động</button></div>
+        <div class="filterbar"><select class="select" id="calendarType"><option value="all">Tất cả hoạt động</option><option value="Boss">Boss</option><option value="CTC">CTC</option></select><select class="select" id="calendarDay"><option value="all">Cả tuần</option><option value="0">Thứ Hai</option><option value="1">Thứ Ba</option><option value="2">Thứ Tư</option><option value="3">Thứ Năm</option><option value="4">Thứ Sáu</option><option value="5">Thứ Bảy</option><option value="6">Chủ Nhật</option></select></div>
+        <div class="attendance-days" id="activityCalendar"></div>
+        <div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Danh sách hoạt động</h3><small>Lịch mẫu có thể chỉnh sửa trong phiên hiện tại</small></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Loại</th><th>Khung giờ</th><th>Nội dung</th><th>Bang áp dụng</th><th></th></tr></thead><tbody id="calendarEventTable"></tbody></table></div></div>
+      </section>
+
+      
+      <section class="page" id="page-finance">
+        <div class="section-head"><div><h2>Thu chi & quỹ lương</h2><p>Nhập doanh thu đấu giá và ghi nhận khoản chi. Dữ liệu đang là ví dụ.</p></div><button class="btn btn-primary" id="addExpenseBtn">＋ Thêm khoản chi</button></div>
+        <div class="kpis" id="financeKpis"></div>
+        <div class="panel" style="margin-bottom:15px"><div class="panel-head"><div><h3>Tổng chi theo từng thành viên</h3><small>Cộng các khoản chi được ghi tên người thanh toán, gồm cả khoản đang chờ duyệt.</small></div></div><div class="table-wrap"><table><thead><tr><th>Thành viên / người thanh toán</th><th>Số khoản chi</th><th>Tổng chi (Kim)</th><th>Đã duyệt (Kim)</th><th>Chờ duyệt (Kim)</th></tr></thead><tbody id="expenseByMemberTable"></tbody></table></div></div>
+        <div class="two-col"><div class="panel"><div class="panel-head"><div><h3>Sổ thu chi</h3><small>Khoản chi có trạng thái duyệt sẽ được trừ khỏi quỹ Boss mẫu.</small></div><button class="btn btn-small" id="addRevenueBtn">＋ Ghi doanh thu</button></div><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Loại</th><th>Người ghi</th><th>Nội dung</th><th>Số tiền</th><th>Trạng thái</th></tr></thead><tbody id="ledgerTable"></tbody></table></div></div><div class="panel"><div class="panel-head"><div><h3>Quỹ CTC theo bang</h3><small>Tách quỹ, không gộp chéo giữa các bang.</small></div></div><div class="guild-list" id="financeGuilds"></div><div class="notice warn">Quỹ CTC ở đây là số demo. Trước khi chạy thật, cần nhập quỹ đầu kỳ và quy định khoản nào được phép trừ.</div></div></div>
+      </section>
+
+      
+      <section class="page" id="page-settings">
+        <div class="section-head"><div><h2>Quy định & hướng dẫn</h2><p>Các nguyên tắc đang dùng trong bản demo; có thể thay đổi trước khi làm backend.</p></div></div>
+        <div class="two-col">
+          <div class="panel"><div class="panel-head"><h3>Quy tắc tính công</h3><span class="pill blue">Bản mẫu</span></div><ul style="font-size:12px;line-height:1.9;padding-left:18px"><li>Boss có 4 khung giờ mỗi ngày, 7 ngày/tuần, tổng 28 công.</li><li>KPI Boss đạt khi số công Boss thực tế ≥12.</li><li>CTC có 3 buổi tối: Thứ Sáu, Thứ Bảy, Chủ Nhật.</li><li>Công CTC không tự cộng vào KPI Boss.</li><li>Không tự nhân công theo số xe/tài khoản nếu chưa có quy định rõ.</li></ul></div>
+          <div class="panel"><div class="panel-head"><h3>Quy tắc lương mẫu</h3><span class="pill gold">Cần xác nhận</span></div><ul style="font-size:12px;line-height:1.9;padding-left:18px"><li>Quỹ Boss = doanh thu đấu giá − chi phí Boss được duyệt.</li><li>Chỉ người đạt KPI Boss được chia phần quỹ Boss.</li><li>Đơn giá công = quỹ chia / tổng công có hệ số của người đủ KPI.</li><li>CTC dùng quỹ riêng theo bang; chính sách KPI CTC cần xác nhận.</li><li>Không chia khi tổng công đủ KPI bằng 0 hoặc quỹ âm; phải cảnh báo người quản trị.</li></ul></div>
+          <div class="panel"><div class="panel-head"><h3>Vai trò tài khoản dự kiến</h3></div><div class="guild-list"><div class="guild-line"><div class="guild-symbol">A</div><div class="guild-info"><strong>Quản trị viên</strong><small>Quản lý thành viên, quy định, thu chi, duyệt và khóa bảng lương.</small></div></div><div class="guild-line"><div class="guild-symbol">C</div><div class="guild-info"><strong>Người chấm công</strong><small>Đánh dấu công, gửi ảnh nhận diện để kiểm tra; không sửa lương.</small></div></div><div class="guild-line"><div class="guild-symbol">$</div><div class="guild-info"><strong>Người phát lương</strong><small>Chỉ xác nhận Đã nhận/Chưa nhận trên bảng đã duyệt.</small></div></div><div class="guild-line"><div class="guild-symbol">V</div><div class="guild-info"><strong>Người xem</strong><small>Chỉ xem dữ liệu được phép, không sửa.</small></div></div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Phần chưa kết nối</h3></div><p style="font-size:12px;line-height:1.8">Bản xem trước chưa có Firebase, đăng nhập, phân quyền bảo mật, đồng bộ thời gian thực, sao lưu, khóa kỳ lương, OCR ảnh, nhật ký kiểm toán hoặc lưu dữ liệu bền vững. Đây là các phần cần triển khai trước khi sử dụng cho lương thật.</p><button class="btn btn-primary" id="rulesHelpBtn">Xem hướng dẫn nhanh</button></div>
+        </div>
+      </section>
+      <div class="footer-note">ĐẠI ĐẾ • Bản mẫu giao diện tương tác. Mọi số tiền, thành viên và trạng thái hiển thị là dữ liệu minh họa, không phải dữ liệu bang hội thật.</div>
+    </main>
+  </div>
+</div>
+
+
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><div class="modal-head"><h3 id="modalTitle">Thêm dữ liệu</h3><button class="close" id="modalClose" aria-label="Đóng">×</button></div><div id="modalContent"></div><div class="modal-actions"><button class="btn" id="modalCancel">Hủy</button><button class="btn btn-primary" id="modalSave">Lưu dữ liệu mẫu</button></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+
+
+
+
+
+
+
+
+
+
+  <!-- Nạp theo thứ tự: core trước, các module mở rộng sau. -->
+  <script src="assets/js/app-core.js"></script>
+  <script src="assets/js/modules/payroll-enhancements.js"></script>
+  <script src="assets/js/modules/dashboard-enhancements.js"></script>
+  <script src="assets/js/modules/auction.js"></script>
+
+</body>
+</html>

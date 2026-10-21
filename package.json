@@ -1,0 +1,13 @@
+{
+  "name": "daide-guild-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prototype frontend for Đại Đế guild management",
+  "scripts": {
+    "dev": "http-server frontend -c-1",
+    "start": "http-server frontend -p ${PORT:-8080} -c-1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
