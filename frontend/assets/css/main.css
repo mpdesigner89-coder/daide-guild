@@ -242,3 +242,10 @@ td,th{padding:8px 9px}
 .member-order-buttons{display:inline-flex;gap:4px;margin-left:5px;white-space:nowrap}
 .member-order-buttons .btn{min-width:28px;padding:5px 8px}
 .member-order-buttons .btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Trung tâm thông báo: bảng điều khiển trong trang, không phải popup trình duyệt */
+.notification-panel{position:fixed;z-index:100;right:20px;top:85px;width:min(440px,calc(100vw - 30px));max-height:75vh;overflow:auto;padding:16px;border:1px solid var(--line);border-radius:15px;background:var(--panel);box-shadow:0 18px 55px #10213c33}
+.notification-panel[hidden], [hidden]{display:none!important}
+.notification-item{padding:12px 6px;border-bottom:1px solid var(--line);font-size:12px;line-height:1.6}
+.notification-item:last-child{border-bottom:0}.notification-item.unread{border-left:3px solid #d69c26;padding-left:10px}
+#notificationBadge{font-size:11px;font-weight:800}

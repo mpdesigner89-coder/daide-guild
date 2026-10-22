@@ -25,7 +25,7 @@ onAuthStateChanged(auth,async user=>{
   try{
     const profile=await getDoc(doc(db,"users",user.uid));
     admin=profile.exists()&&profile.data().role==="admin"&&profile.data().status==="active";
-    document.getElementById("quickAddBtn").hidden=!admin;
+    document.getElementById("addMemberBtn").hidden=!admin;
     document.getElementById("addMemberBtn").hidden=!admin;
     if(admin)show("Đã xác minh quyền Admin từ Firestore.");
     unsubscribe=onSnapshot(collection(db,"members"),snapshot=>{

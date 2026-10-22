@@ -6,7 +6,9 @@
    BỔ SUNG BẢNG LƯƠNG: xem công CTC và quy trình khiếu nại.
    Đây là dữ liệu demo ở trình duyệt; quản trị thật cần xác thực và lưu server.
    ================================================================ */
+// Khiếu nại hiện là dữ liệu demo trong bộ nhớ, chưa đồng bộ Firestore.
 const payrollComplaints = [];
+const complaintIsAdmin=()=>window.DaiDeMembers?.isAdmin()===true;
 let nextComplaintId = 1;
 const originalRenderPayroll = renderPayroll;
 renderPayroll = function() {
@@ -68,8 +70,8 @@ function openComplaintForm(member) {
 
 function showMemberComplaints(member) {
   const items=payrollComplaints.filter(c=>c.memberId===member.id);
-  const html=items.length?items.map(c=>`<div class="complaint-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>Khiếu nại #${c.id}</strong>${statusPill(c.status)}</div><p class="complaint-note">Gửi lúc: ${esc(c.createdAt)}</p><p>${esc(c.comment)}</p>${c.images.length?`<div class="complaint-images">${c.images.map(img=>`<a href="${img.data}" target="_blank" rel="noopener"><img src="${img.data}" alt="${esc(img.name)}"></a>`).join("")}</div>`:`<p class="complaint-note">Không có ảnh minh chứng.</p>`}${c.reviewNote?`<p class="complaint-note"><strong>Ghi chú duyệt:</strong> ${esc(c.reviewNote)}</p>`:""}${c.status==="Chờ duyệt"?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-small btn-primary" data-review-complaint="${c.id}" data-decision="Đã duyệt">Duyệt khiếu nại</button><button class="btn btn-small" data-review-complaint="${c.id}" data-decision="Không duyệt">Không duyệt</button></div>`:""}</div>`).join(""):`<p class="complaint-note">Thành viên này chưa gửi khiếu nại.</p>`;
-  openModal(`Khiếu nại · ${member.zalo}`,`<div>${html}<p class="complaint-note">Các nút duyệt trong bản xem trước chỉ mô phỏng quyền quản trị; bản chính thức phải kiểm tra vai trò ở máy chủ.</p></div>`,()=>true);
+  const html=items.length?items.map(c=>`<div class="complaint-card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>Khiếu nại #${c.id}</strong>${statusPill(c.status)}</div><p class="complaint-note">Gửi lúc: ${esc(c.createdAt)}</p><p>${esc(c.comment)}</p>${c.images.length?`<div class="complaint-images">${c.images.map(img=>`<a href="${img.data}" target="_blank" rel="noopener"><img src="${img.data}" alt="${esc(img.name)}"></a>`).join("")}</div>`:`<p class="complaint-note">Không có ảnh minh chứng.</p>`}${c.reviewNote?`<p class="complaint-note"><strong>Ghi chú duyệt:</strong> ${esc(c.reviewNote)}</p>`:""}${c.status==="Chờ duyệt"&&complaintIsAdmin()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-small btn-primary" data-review-complaint="${c.id}" data-decision="Đã duyệt">Duyệt khiếu nại</button><button class="btn btn-small" data-review-complaint="${c.id}" data-decision="Không duyệt">Không duyệt</button></div>`:""}</div>`).join(""):`<p class="complaint-note">Thành viên này chưa gửi khiếu nại.</p>`;
+  openModal(`Khiếu nại · ${member.zalo}`,`<div>${html}<p class="complaint-note">Khiếu nại hiện chỉ lưu trong phiên demo, chưa được đồng bộ Firestore.</p></div>`,()=>true);
   document.getElementById("modalSave").textContent="Đóng";
 }
 
@@ -77,7 +79,17 @@ document.addEventListener("click", e => {
   const btn=e.target.closest("button"); if(!btn)return;
   if(btn.dataset.newComplaint){const m=members.find(x=>x.id===Number(btn.dataset.newComplaint));if(m)openComplaintForm(m);return;}
   if(btn.dataset.listComplaints){const m=members.find(x=>x.id===Number(btn.dataset.listComplaints));if(m)showMemberComplaints(m);return;}
-  if(btn.dataset.reviewComplaint){const c=payrollComplaints.find(x=>x.id===Number(btn.dataset.reviewComplaint));if(!c)return;const decision=btn.dataset.decision;const note=prompt(decision==="Đã duyệt"?"Ghi chú duyệt (không bắt buộc):":"Lý do không duyệt (nên ghi rõ):","");if(note===null)return;if(decision==="Không duyệt"&&!note.trim()){showToast("Vui lòng nhập lý do không duyệt.");return;}c.status=decision;c.reviewNote=note.trim();renderPayroll();const m=members.find(x=>x.id===c.memberId);if(m)showMemberComplaints(m);showToast(`Đã cập nhật khiếu nại: ${decision}.`);return;}
+  if(btn.dataset.reviewComplaint){
+    if(!complaintIsAdmin()){showToast('Chỉ Admin được xử lý khiếu nại.');return;}
+    const c=payrollComplaints.find(x=>x.id===Number(btn.dataset.reviewComplaint));if(!c||c.status!=='Chờ duyệt')return;
+    const decision=btn.dataset.decision;
+    openModal('Phản hồi khiếu nại',`<div class="field"><label>Ghi chú xử lý ${esc(decision)}</label><textarea id="complaintDecisionNote" rows="3" placeholder="Nhập nội dung phản hồi..."></textarea></div>`,()=>{
+      const note=document.getElementById('complaintDecisionNote').value.trim();
+      if(!note){showToast('Vui lòng nhập nội dung phản hồi.');return false;}
+      c.status=decision;c.reviewNote=note;c.reviewedAt=new Date().toLocaleString('vi-VN');
+      renderPayroll();showToast('Đã phản hồi khiếu nại trong phiên demo; lịch sử vẫn được giữ.');return true;
+    });document.getElementById('modalSave').textContent='Gửi phản hồi';return;
+  }
 });
 
 /* Nút Lưu trong modal khiếu nại phải chờ đọc ảnh xong mới đóng hộp thoại. */

@@ -53,7 +53,7 @@ function render(){
 }
 async function decide(uid,approve){
  const r=requests.find(x=>x.uid===uid);if(!r||!admin)return;
- const reason=approve?'':prompt('Lý do từ chối (hiển thị cho các thành viên):');if(!approve&&reason===null)return;
+ if(!approve&&!window.__joinRejectConfirmed){openModal('Từ chối đơn gia nhập',`<div class="field"><label>Lý do từ chối</label><textarea id="joinRejectReason" maxlength="300" required rows="3"></textarea></div>`,()=>{const reason=document.getElementById('joinRejectReason').value.trim();if(!reason){document.getElementById('joinRejectReason').reportValidity();return false;}window.__joinRejectConfirmed=reason;decide(uid,false);return true;});document.getElementById('modalSave').textContent='Xác nhận từ chối';return;}const reason=approve?'':window.__joinRejectConfirmed;window.__joinRejectConfirmed=null;
  try{
   await runTransaction(db,async tx=>{
    const reqRef=doc(db,'joinRequests',uid),snap=await tx.get(reqRef);
@@ -71,5 +71,5 @@ onAuthStateChanged(auth,async user=>{
  if(unsub){unsub();unsub=null;}requests=[];admin=false;
  if(!user){host.hidden=true;return;}host.hidden=false;
  try{const profile=await getDoc(doc(db,'users',user.uid));admin=profile.exists()&&profile.data().role==='admin'&&profile.data().status==='active';}catch(e){toast('Không đọc được quyền duyệt: '+e.message);}
- unsub=onSnapshot(collection(db,'joinRequests'),snap=>{requests=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render();},e=>{document.getElementById('joinRequestRows').textContent='Không tải được yêu cầu: '+e.message;});
+ unsub=onSnapshot(collection(db,'joinRequests'),snap=>{requests=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render();window.dispatchEvent(new CustomEvent('daide:join-requests',{detail:{requests,admin,uid:auth.currentUser?.uid}}));},e=>{document.getElementById('joinRequestRows').textContent='Không tải được yêu cầu: '+e.message;});
 });

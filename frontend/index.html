@@ -36,10 +36,10 @@
         <div><div class="eyebrow">Hệ thống điều hành bang hội</div><h1 id="pageTitle">Bảng điều khiển</h1><div class="subtitle" id="pageSubtitle">Theo dõi chấm công, quỹ lương và tiến độ hoạt động trong tuần.</div></div>
         <div class="top-actions">
           <select class="select" id="weekSelect" aria-label="Chọn tuần"><option value="2026-W43">Tuần 43 · 19–25/10/2026</option><option value="2026-W42">Tuần 42 · 12–18/10/2026</option><option value="2026-W41">Tuần 41 · 05–11/10/2026</option></select>
-          <button class="btn" id="helpBtn">ⓘ Hướng dẫn</button>
+          <button class="btn" id="helpBtn">ⓘ Hướng dẫn</button><button class="btn" id="notificationBell" type="button" hidden aria-label="Thông báo">🔔 <span id="notificationBadge">0</span></button>
           <button class="btn" id="loginBtn">⇥ Đăng nhập</button>
           <button class="btn btn-primary" id="registerBtn">＋ Đăng ký</button>
-          <button class="btn btn-primary" id="quickAddBtn">＋ Thêm thành viên</button>
+          
         </div>
       </header>
 
@@ -113,7 +113,7 @@
           <div class="panel"><div class="panel-head"><h3>Quy tắc tính công</h3><span class="pill blue">Bản mẫu</span></div><ul style="font-size:12px;line-height:1.9;padding-left:18px"><li>Boss có 4 khung giờ mỗi ngày, 7 ngày/tuần, tổng 28 công.</li><li>KPI Boss đạt khi số công Boss thực tế ≥12.</li><li>CTC có 3 buổi tối: Thứ Sáu, Thứ Bảy, Chủ Nhật.</li><li>Công CTC không tự cộng vào KPI Boss.</li><li>Không tự nhân công theo số acc nếu chưa có quy định rõ.</li></ul></div>
           <div class="panel"><div class="panel-head"><h3>Quy tắc lương mẫu</h3><span class="pill gold">Cần xác nhận</span></div><ul style="font-size:12px;line-height:1.9;padding-left:18px"><li>Quỹ Boss = doanh thu đấu giá − chi phí Boss được duyệt.</li><li>Chỉ người đạt KPI Boss được chia phần quỹ Boss.</li><li>Đơn giá công = quỹ chia / tổng công có hệ số của người đủ KPI.</li><li>CTC dùng quỹ riêng theo bang; chính sách KPI CTC cần xác nhận.</li><li>Không chia khi tổng công đủ KPI bằng 0 hoặc quỹ âm; phải cảnh báo người quản trị.</li></ul></div>
           <div class="panel"><div class="panel-head"><h3>Vai trò tài khoản dự kiến</h3></div><div class="guild-list"><div class="guild-line"><div class="guild-symbol">A</div><div class="guild-info"><strong>Quản trị viên</strong><small>Quản lý thành viên, quy định, thu chi, duyệt và khóa bảng lương.</small></div></div><div class="guild-line"><div class="guild-symbol">C</div><div class="guild-info"><strong>Người chấm công</strong><small>Đánh dấu công, gửi ảnh nhận diện để kiểm tra; không sửa lương.</small></div></div><div class="guild-line"><div class="guild-symbol">$</div><div class="guild-info"><strong>Người phát lương</strong><small>Chỉ xác nhận Đã nhận/Chưa nhận trên bảng đã duyệt.</small></div></div><div class="guild-line"><div class="guild-symbol">V</div><div class="guild-info"><strong>Người xem</strong><small>Chỉ xem dữ liệu được phép, không sửa.</small></div></div></div></div>
-          <div class="panel"><div class="panel-head"><h3>Phần chưa kết nối</h3></div><p style="font-size:12px;line-height:1.8">Bản xem trước chưa có Firebase, đăng nhập, phân quyền bảo mật, đồng bộ thời gian thực, sao lưu, khóa kỳ lương, OCR ảnh, nhật ký kiểm toán hoặc lưu dữ liệu bền vững. Đây là các phần cần triển khai trước khi sử dụng cho lương thật.</p><button class="btn btn-primary" id="rulesHelpBtn">Xem hướng dẫn nhanh</button></div>
+          <div class="panel"><div class="panel-head"><h3>Đăng ký gia nhập bang hội</h3></div><ol style="font-size:12px;line-height:1.9;padding-left:22px"><li>Chọn Đăng ký, tạo Username và mật khẩu.</li><li>Điền tên Zalo, nhân vật chính, bang, môn phái, số acc và acc phụ (nếu có).</li><li>Không tự khai chức vụ hoặc hệ số lương; Admin quản lý hai mục này.</li><li>Sau khi đăng nhập, vào Thành viên → Gửi đơn gia nhập bang hội nếu chưa có đơn.</li><li>Đơn hiển thị Chờ duyệt để mọi thành viên đã đăng nhập theo dõi.</li><li>Admin duyệt hoặc từ chối; khi duyệt, nhân vật được thêm vào danh sách chính thức.</li><li>Theo dõi kết quả tại mục Thành viên và chuông thông báo.</li></ol></div><div class="panel"><div class="panel-head"><h3>Phần chưa kết nối</h3></div><p style="font-size:12px;line-height:1.8">Bản xem trước chưa có Firebase, đăng nhập, phân quyền bảo mật, đồng bộ thời gian thực, sao lưu, khóa kỳ lương, OCR ảnh, nhật ký kiểm toán hoặc lưu dữ liệu bền vững. Đây là các phần cần triển khai trước khi sử dụng cho lương thật.</p><button class="btn btn-primary" id="rulesHelpBtn">Xem hướng dẫn nhanh</button></div>
         </div>
       </section>
       <div class="footer-note">ĐẠI ĐẾ • Bản mẫu giao diện tương tác. Mọi số tiền, thành viên và trạng thái hiển thị là dữ liệu minh họa, không phải dữ liệu bang hội thật.</div>
@@ -123,7 +123,7 @@
 
 
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><div class="modal-head"><h3 id="modalTitle">Thêm dữ liệu</h3><button class="close" id="modalClose" aria-label="Đóng">×</button></div><div id="modalContent"></div><div class="modal-actions"><button class="btn" id="modalCancel">Hủy</button><button class="btn btn-primary" id="modalSave">Lưu dữ liệu mẫu</button></div></div></div>
-<div class="toast" id="toast" role="status"></div>
+<div class="toast" id="toast" role="status"></div><aside id="notificationPanel" class="notification-panel" hidden><div class="panel-head"><h3>🔔 Thông báo bang hội</h3><button type="button" class="btn btn-small" id="notificationClose">Đóng</button></div><div id="notificationItems"></div></aside>
 
 
 
@@ -143,6 +143,7 @@
   <script type="module" src="assets/js/modules/firebase-auth.js"></script>
   <script type="module" src="assets/js/modules/firebase-members.js"></script>
   <script type="module" src="assets/js/modules/firebase-registration.js"></script>
+  <script type="module" src="assets/js/modules/notifications.js"></script>
 
 </body>
 </html>
