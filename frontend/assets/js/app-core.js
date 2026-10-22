@@ -29,15 +29,8 @@ let currentPage = "dashboard";
 let toastTimer;
 let nextId = 20;
 let ctcMode = "separate"; // separate = mỗi bang tự chia quỹ; combined = gộp quỹ CTC.
-let members = [
-    {id:1,zalo:"Minh Đế",character:"Đế Vương",guild:"Đại Đế",role:"Bang chủ",vehicles:2,coefBoss:2.0,coefCtc:1.5,boss:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],ctc:[0,1,2],paidBoss:"Chưa nhận",paidCtc:"Chưa nhận"},
-  {id:2,zalo:"Hắc Long",character:"Long Thiên",guild:"Đại Đế",role:"Trưởng lão",vehicles:1,coefBoss:1.5,coefCtc:1.0,boss:[0,1,2,3,4,5,6,7,8,9,10,11],ctc:[0,2],paidBoss:"Chưa nhận",paidCtc:"Đã nhận"},
-  {id:3,zalo:"Bạch Vân",character:"Vân Phi",guild:"Nhị Đế",role:"Thành viên",vehicles:3,coefBoss:1.0,coefCtc:1.2,boss:[0,1,2,3,4,5,6,7,8,9],ctc:[1,2],paidBoss:"Chưa đạt KPI",paidCtc:"Chưa nhận"},
-  {id:4,zalo:"Tiểu Kỳ",character:"Kỳ Phong",guild:"Tam Đế",role:"Thành viên",vehicles:1,coefBoss:1.0,coefCtc:1.0,boss:[0,1,2,3,4,5,6,7,8,9,10,11,12],ctc:[0,1],paidBoss:"Chưa nhận",paidCtc:"Chưa nhận"},
-  {id:5,zalo:"Mộc Lan",character:"Lan Mộc",guild:"Chấp Niệm",role:"Hộ pháp",vehicles:2,coefBoss:1.5,coefCtc:1.3,boss:[0,1,2,3,4,5,6,7],ctc:[0],paidBoss:"Chưa đạt KPI",paidCtc:"Chưa nhận"},
-  {id:6,zalo:"Vô Danh",character:"Kiếm Khách",guild:"Đại Đế",role:"Thành viên",vehicles:1,coefBoss:1.0,coefCtc:1.0,boss:[0,1,2,3,4,5,6,7,8,9,10,11,12,13],ctc:[1,2],paidBoss:"Chưa nhận",paidCtc:"Chưa nhận"},
-  {id:7,zalo:"Thanh Tâm",character:"Tâm Nhi",guild:"Nhị Đế",role:"Thành viên",vehicles:1,coefBoss:1.0,coefCtc:0.8,boss:[0,1,2,3,4,5],ctc:[],paidBoss:"Chưa đạt KPI",paidCtc:"Chưa nhận"}
-];
+let members = []; // Chỉ tải danh sách thật từ Firestore.
+
 let expenses = [
   {date:"20/10/2026",type:"Chi Boss",by:"Minh Đế",desc:"Hỗ trợ hoạt động bang",amount:500,approved:true},
   {date:"21/10/2026",type:"Chi Boss",by:"Hắc Long",desc:"Vật phẩm sự kiện",amount:250,approved:false},
@@ -159,11 +152,18 @@ function renderCtc() {
   const q=(document.getElementById("ctcSearch").value||"").toLocaleLowerCase("vi");const rows=members.filter(m=>memberSearchText(m).includes(q));
   document.getElementById("ctcTable").innerHTML=rows.map(m=>`<tr><td>${memberIdentity(m)}</td><td>${guildChip(m.guild)}</td><td><strong>${totalCtc(m)}/3</strong><details class="ctc-work-details"><summary class="btn btn-small">Xem công</summary><div class="ctc-work-list">${names.map((day,i)=>`<div class="ctc-work-row"><span>${day}</span><span class="pill ${m.ctc.includes(i)?"green":"gray"}">${m.ctc.includes(i)?"Đã chấm":"Chưa chấm"}</span></div>`).join("")}</div></details></td><td><span class="coef-chip coef-ctc">${Number(m.coefCtc??m.coef??1).toFixed(1)}×</span></td><td><button class="btn btn-small" data-edit-ctc="${m.id}">Sửa công CTC</button></td></tr>`).join("")||`<tr><td colspan="5" class="empty">Không tìm thấy thành viên.</td></tr>`;
 }
+// STT và thứ tự chuẩn dùng chung cho mọi tab; Firestore là nguồn dữ liệu duy nhất.
+function memberOrderValue(m) {
+  return Number.isSafeInteger(m.sortOrder) && m.sortOrder >= 0 ? m.sortOrder : Number(m.id);
+}
+function sortMembersEverywhere() {
+  members.sort((a,b)=>memberOrderValue(a)-memberOrderValue(b) || a.id-b.id);
+}
 function renderMembers() {
   const q=(document.getElementById("memberSearch").value||"").toLowerCase();const guild=document.getElementById("guildFilter").value;
   const rows=members.filter(m=>(guild==="all"||m.guild===guild)&&(memberSearchText(m).includes(q)));
   document.getElementById("memberCount").textContent=`${rows.length} thành viên`;
-  document.getElementById("memberTable").innerHTML=rows.map(m=>`<tr><td>${memberIdentity(m)}</td><td>${sectChip(m.sect)}</td><td>${guildChip(m.guild)}</td><td>${roleChip(m.role)}</td><td><span class="vehicle-chip">${m.vehicles} acc</span></td><td><span class="coef-chip">${Number(m.coefBoss??m.coef??1).toFixed(1)}×</span></td><td><span class="coef-chip coef-ctc">${Number(m.coefCtc??m.coef??1).toFixed(1)}×</span></td><td><button class="btn btn-small" data-edit-member="${m.id}">Sửa</button> <button class="btn btn-small" data-delete-member="${m.id}">Xóa</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty">Không tìm thấy thành viên.</td></tr>`;
+  document.getElementById("memberTable").innerHTML=rows.map(m=>`<tr><td><strong>${members.indexOf(m)+1}</strong></td><td>${memberIdentity(m)}</td><td>${sectChip(m.sect)}</td><td>${guildChip(m.guild)}</td><td>${roleChip(m.role)}</td><td><span class="vehicle-chip">${m.vehicles} acc</span></td><td><span class="coef-chip">${Number(m.coefBoss??m.coef??1).toFixed(1)}×</span></td><td><span class="coef-chip coef-ctc">${Number(m.coefCtc??m.coef??1).toFixed(1)}×</span></td><td><button class="btn btn-small" data-edit-member="${m.id}">Sửa</button> <button class="btn btn-small" data-delete-member="${m.id}">Xóa</button> ${window.DaiDeMembers?.isAdmin()?`<span class="member-order-buttons"><button class="btn btn-small" data-move-member="${m.id}" data-move-direction="-1" title="Đưa thành viên lên" aria-label="Đưa ${esc(m.zalo)} lên" ${members.indexOf(m)===0?"disabled":""}>↑</button><button class="btn btn-small" data-move-member="${m.id}" data-move-direction="1" title="Đưa thành viên xuống" aria-label="Đưa ${esc(m.zalo)} xuống" ${members.indexOf(m)===members.length-1?"disabled":""}>↓</button></span>`:""}</td></tr>`).join("")||`<tr><td colspan="9" class="empty">Không tìm thấy thành viên.</td></tr>`;
 }
 function renderPayroll() {
   const bossTotal=members.reduce((s,m)=>s+bossPayroll(m),0), ctcTotal=members.reduce((s,m)=>s+ctcPayroll(m),0);
@@ -189,7 +189,7 @@ function renderFinance() {
   document.getElementById("expenseByMemberTable").innerHTML=expenseNames.map(name=>{const items=expenses.filter(e=>e.type!=="Doanh thu"&&e.by.trim().toLocaleLowerCase("vi")===name.toLocaleLowerCase("vi"));const total=items.reduce((s,e)=>s+Number(e.amount||0),0),approved=items.filter(e=>e.approved).reduce((s,e)=>s+Number(e.amount||0),0);return `<tr><td>${esc(name)}</td><td>${items.length}</td><td><strong>${money(total)}</strong></td><td>${money(approved)}</td><td>${money(total-approved)}</td></tr>`}).join("")||`<tr><td colspan="5" class="empty">Chưa có khoản chi theo thành viên.</td></tr>`;
   document.getElementById("financeGuilds").innerHTML=GUILDS.map(g=>`<div class="guild-line"><div class="guild-symbol">${esc(g.split(" ").map(x=>x[0]).join(""))}</div><div class="guild-info"><strong>${esc(g)}</strong><small>Quỹ CTC riêng</small></div><div class="guild-amount">${money(ctcFunds[g]||0)}</div><button class="btn btn-small" data-edit-fund="${esc(g)}">Sửa</button></div>`).join("");
 }
-function renderAll() { renderDashboard();renderAttendance();renderCtc();renderMembers();renderPayroll();renderFinance(); }
+function renderAll() { sortMembersEverywhere();renderDashboard();renderAttendance();renderCtc();renderMembers();renderPayroll();renderFinance(); }
 
 /* Mở modal với form phù hợp. Toàn bộ form được tạo bằng HTML rõ ràng. */
 let modalAction=null;
@@ -223,7 +223,7 @@ function memberForm(m={}) {
     <div class="field"><label for="mSect">Môn phái acc chính</label><select id="mSect" name="sect"><option value="">-- Chọn môn phái --</option>${SECTS.map(s=>`<option ${m.sect===s?"selected":""}>${s}</option>`).join("")}</select></div>
     <div class="field"><label for="mGuild">Bang</label><select id="mGuild" name="guild">${GUILDS.map(g=>`<option ${m.guild===g?"selected":""}>${g}</option>`).join("")}</select></div>
     <div class="field"><label for="mRole">Chức vụ</label><input id="mRole" name="role" value="${esc(m.role||"Thành viên")}"></div>
-    <div class="field"><label for="mVehicles">Số acc</label><input id="mVehicles" name="vehicles" type="number" min="1" max="20" value="${m.vehicles||1}"></div>
+    <div class="field"><label for="mVehicles">Số acc</label><input id="mVehicles" name="vehicles" type="number" min="1" value="${m.vehicles||1}"></div>
     <div class="field"><label for="mCoefBoss">Hệ số lương Boss</label><input id="mCoefBoss" name="coefBoss" type="number" min="0" step="0.1" value="${Number(m.coefBoss??m.coef??1)}"></div>
     <div class="field"><label for="mCoefCtc">Hệ số lương CTC</label><input id="mCoefCtc" name="coefCtc" type="number" min="0" step="0.1" value="${Number(m.coefCtc??m.coef??1)}"></div>
     <div class="field full" style="grid-column:1/-1"><label>Acc phụ — nhập thông tin riêng cho từng nhân vật</label><div id="secondaryAccountFields">${secondaryFields}</div><button type="button" class="btn btn-small" id="addSecondaryAccount">＋ Thêm acc phụ</button></div>
@@ -285,6 +285,14 @@ document.addEventListener("click",e=>{
   if(target.dataset.editAttendance){const m=members.find(x=>x.id===Number(target.dataset.editAttendance));if(m)editMemberAttendance(m);return;}
   if(target.dataset.ctcDay!==undefined){const day=Number(target.dataset.ctcDay);const list=members.map(m=>`<label data-ctc-member="${esc(memberSearchText(m))}" style="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px"><input type="checkbox" name="ctcPresent" value="${m.id}" ${m.ctc.includes(day)?"checked":""}> <span><strong>${esc(m.zalo)} · ${esc(m.character)}</strong><br><small class="muted">${esc(m.guild)} · ${esc(m.sect||"Chưa chọn môn phái")}</small></span></label>`).join("");openModal(`Chấm CTC · ${["Thứ Sáu","Thứ Bảy","Chủ Nhật"][day]}`,`<form id="ctcDayForm"><input class="search" id="ctcModalSearch" placeholder="Lọc thành viên, acc chính/phụ, bang, môn phái..."><div style="max-height:50vh;overflow:auto">${list}</div></form><div class="notice">Tìm thành viên rồi tích chọn người có mặt.</div>`,()=>{const selected=[...document.querySelectorAll('input[name="ctcPresent"]:checked')].map(x=>Number(x.value));members.forEach(m=>{m.ctc=m.ctc.filter(x=>x!==day);if(selected.includes(m.id))m.ctc.push(day);m.ctc=[...new Set(m.ctc)].sort();});renderAll();showToast("Đã cập nhật danh sách CTC.");return true;});document.getElementById("ctcModalSearch").addEventListener("input",e=>{const q=e.target.value.toLocaleLowerCase("vi");document.querySelectorAll("[data-ctc-member]").forEach(row=>row.hidden=!row.dataset.ctcMember.includes(q));});return;}
   if(target.dataset.editCtc){const m=members.find(x=>x.id===Number(target.dataset.editCtc));if(m)editMemberCtc(m);return;}
+  if(target.dataset.moveMember){
+    const id=Number(target.dataset.moveMember), direction=Number(target.dataset.moveDirection);
+    const index=members.findIndex(m=>m.id===id), other=members[index+direction];
+    if(index<0||!other||!window.DaiDeMembers?.isAdmin())return;
+    const buttons=document.querySelectorAll('[data-move-member]');buttons.forEach(b=>b.disabled=true);
+    window.DaiDeMembers.move(id,other.id).then(()=>showToast("Đã lưu thứ tự thành viên.")).catch(err=>showToast("Không thể đổi thứ tự: "+err.message)).finally(()=>buttons.forEach(b=>b.disabled=false));
+    return;
+  }
   if(target.dataset.editMember){const m=members.find(x=>x.id===Number(target.dataset.editMember));if(m)memberForm(m);return;}
   if(target.dataset.deleteMember){const m=members.find(x=>x.id===Number(target.dataset.deleteMember));if(m&&window.DaiDeMembers?.isAdmin()&&confirm(`Xóa ${m.zalo} khỏi Firestore?`)){window.DaiDeMembers.remove(m.id).then(()=>showToast("Đã xóa thành viên.")).catch(e=>showToast("Không thể xóa: "+e.message));}else if(!window.DaiDeMembers?.isAdmin())showToast("Chỉ Admin được xóa thành viên.");return;}
   if(target.dataset.togglePaid){const [type,id]=target.dataset.togglePaid.split(":");const m=members.find(x=>x.id===Number(id));if(m){const key=type==="boss"?"paidBoss":"paidCtc";if(type==="boss"&&!isEligible(m)){m[key]="Chưa đạt KPI";showToast("Thành viên chưa đạt KPI Boss, không thể xác nhận nhận lương Boss.");}else{m[key]=m[key]==="Đã nhận"?"Chưa nhận":"Đã nhận";showToast(`Đã cập nhật trạng thái ${type.toUpperCase()} demo.`);}renderAll();}return;}

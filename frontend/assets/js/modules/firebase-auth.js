@@ -80,7 +80,7 @@ function showRegister() {
     ${field("registerNickname","Biệt danh / Tên acc chính","text","nickname","Tên ingame của nhân vật chính")}
     <div class="field"><label>Bang hội</label><select id="registerGuild">${options(guilds)}</select></div>
     <div class="field"><label>Môn phái</label><select id="registerSect" required><option value="">-- Chọn môn phái --</option>${options(sects)}</select></div>
-    <div class="field"><label>Số acc</label><input id="registerVehicles" type="number" min="1" max="20" value="1" required></div>
+    <div class="field"><label>Số acc</label><input id="registerVehicles" type="number" min="1" value="1" required></div>
     <div class="field full" style="grid-column:1/-1"><label>Danh sách acc phụ</label><div id="registerSecondaryRows"></div><button type="button" class="btn btn-small" id="registerAddSecondary">＋ Thêm acc phụ</button></div>
   </form><p id="firebaseFormError" role="alert" style="color:#e57373"></p><div class="notice warn">Hồ sơ gia nhập sẽ ở trạng thái Chờ duyệt, hiển thị công khai cho các thành viên đã đăng nhập. Admin xét duyệt trước khi được chấm công và tính lương.</div>`, () => {
     const form=document.getElementById("firebaseRegisterForm");

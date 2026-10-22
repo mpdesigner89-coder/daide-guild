@@ -1,12 +1,24 @@
 /** Firestore members: dữ liệu thật, riêng biệt với hồ sơ đăng nhập users. */
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, onSnapshot, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, onSnapshot, setDoc, deleteDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 const auth=getAuth(getApp()), db=getFirestore(getApp());
 let admin=false, unsubscribe=null, ready=false;
 const show=m=>typeof showToast==="function"?showToast(m):alert(m);
-const validRecord=r=>({id:Number(r.id),zalo:String(r.zalo||""),character:String(r.character||""),sect:String(r.sect||""),guild:String(r.guild||"Đại Đế"),role:String(r.role||"Thành viên"),vehicles:Number(r.vehicles||1),coefBoss:Number(r.coefBoss??1),coefCtc:Number(r.coefCtc??1),secondaryAccounts:Array.isArray(r.secondaryAccounts)?r.secondaryAccounts:[],boss:Array.isArray(r.boss)?r.boss:[],ctc:Array.isArray(r.ctc)?r.ctc:[],paidBoss:String(r.paidBoss||"Chưa nhận"),paidCtc:String(r.paidCtc||"Chưa nhận")});
-window.DaiDeMembers={isAdmin:()=>admin,save:async record=>{if(!admin)throw Error("Không có quyền Admin");const r=validRecord(record);if(!Number.isSafeInteger(r.id))throw Error("ID không hợp lệ");await setDoc(doc(db,"members",String(r.id)),{...r,updatedAt:serverTimestamp()},{merge:true});},remove:async id=>{if(!admin)throw Error("Không có quyền Admin");await deleteDoc(doc(db,"members",String(id)));}};
+const validRecord=r=>({id:Number(r.id),sortOrder:Number.isSafeInteger(r.sortOrder)&&r.sortOrder>=0?r.sortOrder:Number(r.id),zalo:String(r.zalo||""),character:String(r.character||""),sect:String(r.sect||""),guild:String(r.guild||"Đại Đế"),role:String(r.role||"Thành viên"),vehicles:Number(r.vehicles||1),coefBoss:Number(r.coefBoss??1),coefCtc:Number(r.coefCtc??1),secondaryAccounts:Array.isArray(r.secondaryAccounts)?r.secondaryAccounts:[],boss:Array.isArray(r.boss)?r.boss:[],ctc:Array.isArray(r.ctc)?r.ctc:[],paidBoss:String(r.paidBoss||"Chưa nhận"),paidCtc:String(r.paidCtc||"Chưa nhận")});
+window.DaiDeMembers={isAdmin:()=>admin,save:async record=>{if(!admin)throw Error("Không có quyền Admin");const r=validRecord(record);if(!Number.isSafeInteger(record.sortOrder)){const previous=members.find(m=>m.id===r.id);r.sortOrder=previous?memberOrderValue(previous):Math.max(0,...members.map(m=>memberOrderValue(m)))+1;}if(!Number.isSafeInteger(r.id))throw Error("ID không hợp lệ");await setDoc(doc(db,"members",String(r.id)),{...r,updatedAt:serverTimestamp()},{merge:true});},remove:async id=>{if(!admin)throw Error("Không có quyền Admin");await deleteDoc(doc(db,"members",String(id)));},
+move:async (firstId,secondId)=>{
+  if(!admin)throw Error("Chỉ Admin được sắp xếp.");
+  const first=doc(db,"members",String(firstId)), second=doc(db,"members",String(secondId));
+  await runTransaction(db,async tx=>{
+    const a=await tx.get(first), b=await tx.get(second);
+    if(!a.exists()||!b.exists())throw Error("Thành viên không còn tồn tại.");
+    const aOrder=Number.isSafeInteger(a.data().sortOrder)?a.data().sortOrder:Number(firstId);
+    const bOrder=Number.isSafeInteger(b.data().sortOrder)?b.data().sortOrder:Number(secondId);
+    tx.update(first,{sortOrder:bOrder});
+    tx.update(second,{sortOrder:aOrder});
+  });
+}};
 onAuthStateChanged(auth,async user=>{
   if(unsubscribe){unsubscribe();unsubscribe=null;}admin=false;ready=false;
   if(!user){show("Hãy đăng nhập để tải danh sách thành viên.");return;}

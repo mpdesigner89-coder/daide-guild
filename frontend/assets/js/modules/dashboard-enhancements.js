@@ -35,7 +35,7 @@ const originalRenderDashboardV17=renderDashboard;
 renderDashboard=function(){originalRenderDashboardV17();renderCityStats();};
 const originalRenderAllV17=renderAll;
 renderAll=function(){originalRenderAllV17();renderCityStats();renderActivityCalendar();};
-document.getElementById("memberTable")?.closest("table")?.querySelector("thead tr")?.replaceChildren(...["Thành viên / acc chính","Môn phái","Bang chính","Chức vụ","Kéo xe","HSL Boss","HSL CTC","Thao tác"].map(label=>{const th=document.createElement("th");th.textContent=label;return th;}));
+document.getElementById("memberTable")?.closest("table")?.querySelector("thead tr")?.replaceChildren(...["STT","Thành viên / acc chính","Môn phái","Bang chính","Chức vụ","Kéo xe","HSL Boss","HSL CTC","Thao tác"].map(label=>{const th=document.createElement("th");th.textContent=label;return th;}));
 document.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.editCities){const g=b.dataset.editCities;const value=prompt(`Danh sách thành thị do ${g} chiếm (mỗi thành thị một dòng):`,(cityOccupations[g]||[]).join("\n"));if(value===null)return;cityOccupations[g]=[...new Set(value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];renderCityStats();showToast(`Đã cập nhật thành thị của ${g} trong bản demo.`);return;}

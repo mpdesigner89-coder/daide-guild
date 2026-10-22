@@ -9,9 +9,9 @@ const toast=m=>typeof showToast==='function'?showToast(m):alert(m);
 let admin=false,unsub=null,requests=[];
 window.DaiDeRegistration={submit:async(uid,data)=>{
  if(auth.currentUser?.uid!==uid)throw Error('Không đúng tài khoản');
- if(!data.zalo?.trim()||!data.character?.trim()||!guilds.includes(data.guild)||!Number.isInteger(data.vehicles)||data.vehicles<1||data.vehicles>20)throw Error('Thông tin nhân vật không hợp lệ');
+ if(!data.zalo?.trim()||!data.character?.trim()||!guilds.includes(data.guild)||!Number.isInteger(data.vehicles)||data.vehicles<1||!Number.isSafeInteger(data.vehicles))throw Error('Thông tin nhân vật không hợp lệ');
  const secondaryAccounts=(data.secondaryAccounts||[]).map(a=>({name:String(a.name).trim(),guild:a.guild,sect:a.sect}));
- if(secondaryAccounts.length>20||secondaryAccounts.some(a=>!a.name||!guilds.includes(a.guild)||!a.sect))throw Error('Acc phụ không hợp lệ');
+ if(secondaryAccounts.some(a=>!a.name||!guilds.includes(a.guild)||!a.sect))throw Error('Acc phụ không hợp lệ');
  if((await getDoc(doc(db,'joinRequests',uid))).exists())throw Error('Tài khoản này đã có đơn đăng ký.');
  await setDoc(doc(db,'joinRequests',uid),{uid,zalo:data.zalo.trim(),character:data.character.trim(),guild:data.guild,sect:data.sect,vehicles:data.vehicles,secondaryAccounts,status:'pending',createdAt:serverTimestamp()});
 }};
@@ -28,7 +28,7 @@ function showJoinForm(){
  <div class="field"><label>Biệt danh / Tên acc chính *</label><input id="joinCharacter" maxlength="100" required></div>
  <div class="field"><label>Bang hội</label><select id="joinGuild">${opts(guilds)}</select></div>
  <div class="field"><label>Môn phái</label><select id="joinSect" required><option value="">-- Chọn môn phái --</option>${opts(sects)}</select></div>
- <div class="field"><label>Số acc</label><input id="joinVehicles" type="number" min="1" max="20" value="1" required></div>
+ <div class="field"><label>Số acc</label><input id="joinVehicles" type="number" min="1" value="1" required></div>
  <div class="field full" style="grid-column:1/-1"><label>Acc phụ</label><div id="joinSecondaryRows"></div><button type="button" class="btn btn-small" id="joinAddSecondary">＋ Thêm acc phụ</button></div>
  </form><p id="joinFormError" role="alert" style="color:#e57373"></p><div class="notice warn">Đơn sẽ hiển thị công khai ở trạng thái Chờ duyệt. Chức vụ và hệ số lương do Admin quản lý.</div>`,()=>{
  const f=document.getElementById('joinExistingForm');if(!f.reportValidity())return false;
