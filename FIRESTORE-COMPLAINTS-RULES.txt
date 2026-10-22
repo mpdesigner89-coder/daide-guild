@@ -1,0 +1,53 @@
+// DÁN KHỐI NÀY VÀO BÊN TRONG match /databases/{database}/documents,
+// NGAY TRƯỚC catch-all match /{document=**}. KHÔNG xóa Rules hiện có.
+// Cần có sẵn function isActiveUser() và isAdmin() trong Rules hiện tại.
+
+match /complaints/{complaintId} {
+  // Người gửi chỉ đọc đơn của mình; Admin xem mọi đơn.
+  allow read: if isAdmin() || (
+    isActiveUser() && resource.data.ownerUid == request.auth.uid
+  );
+
+  // Người dùng chỉ gửi cho nhân vật có ownerUid của mình;
+  // Admin có thể gửi hộ thành viên. Không thể tự chọn trạng thái xử lý.
+  allow create: if isActiveUser()
+    && request.resource.data.keys().hasOnly([
+      'memberId', 'ownerUid', 'memberName', 'comment',
+      'status', 'reviewNote', 'createdAt'
+    ])
+    && request.resource.data.keys().hasAll([
+      'memberId', 'ownerUid', 'memberName', 'comment',
+      'status', 'reviewNote', 'createdAt'
+    ])
+    && request.resource.data.memberId is int
+    && request.resource.data.memberId > 0
+    && request.resource.data.ownerUid == request.auth.uid
+    && request.resource.data.memberName is string
+    && request.resource.data.memberName.size() > 0
+    && request.resource.data.memberName.size() <= 150
+    && request.resource.data.comment is string
+    && request.resource.data.comment.size() > 0
+    && request.resource.data.comment.size() <= 2000
+    && request.resource.data.status == 'pending'
+    && request.resource.data.reviewNote == ''
+    && request.resource.data.createdAt == request.time
+    && exists(/databases/$(database)/documents/members/$(request.resource.data.memberId))
+    && (
+      isAdmin() ||
+      get(/databases/$(database)/documents/members/$(request.resource.data.memberId)).data.ownerUid == request.auth.uid
+    );
+
+  allow update: if isAdmin()
+    && resource.data.status == 'pending'
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+      'status', 'reviewNote', 'reviewedBy', 'reviewedAt'
+    ])
+    && request.resource.data.status in ['approved', 'rejected']
+    && request.resource.data.reviewNote is string
+    && request.resource.data.reviewNote.size() > 0
+    && request.resource.data.reviewNote.size() <= 2000
+    && request.resource.data.reviewedBy == request.auth.uid
+    && request.resource.data.reviewedAt == request.time;
+
+  allow delete: if false;
+}
