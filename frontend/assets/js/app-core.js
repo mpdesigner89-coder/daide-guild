@@ -163,7 +163,7 @@ function renderMembers() {
   const q=(document.getElementById("memberSearch").value||"").toLowerCase();const guild=document.getElementById("guildFilter").value;
   const rows=members.filter(m=>(guild==="all"||m.guild===guild)&&(memberSearchText(m).includes(q)));
   document.getElementById("memberCount").textContent=`${rows.length} thành viên`;
-  document.getElementById("memberTable").innerHTML=rows.map(m=>`<tr><td>${memberIdentity(m)}</td><td>${sectChip(m.sect)}</td><td>${guildChip(m.guild)}</td><td>${roleChip(m.role)}</td><td><span class="vehicle-chip">${m.vehicles} xe</span></td><td><span class="coef-chip">${Number(m.coefBoss??m.coef??1).toFixed(1)}×</span></td><td><span class="coef-chip coef-ctc">${Number(m.coefCtc??m.coef??1).toFixed(1)}×</span></td><td><button class="btn btn-small" data-edit-member="${m.id}">Sửa</button> <button class="btn btn-small" data-delete-member="${m.id}">Xóa</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty">Không tìm thấy thành viên.</td></tr>`;
+  document.getElementById("memberTable").innerHTML=rows.map(m=>`<tr><td>${memberIdentity(m)}</td><td>${sectChip(m.sect)}</td><td>${guildChip(m.guild)}</td><td>${roleChip(m.role)}</td><td><span class="vehicle-chip">${m.vehicles} acc</span></td><td><span class="coef-chip">${Number(m.coefBoss??m.coef??1).toFixed(1)}×</span></td><td><span class="coef-chip coef-ctc">${Number(m.coefCtc??m.coef??1).toFixed(1)}×</span></td><td><button class="btn btn-small" data-edit-member="${m.id}">Sửa</button> <button class="btn btn-small" data-delete-member="${m.id}">Xóa</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty">Không tìm thấy thành viên.</td></tr>`;
 }
 function renderPayroll() {
   const bossTotal=members.reduce((s,m)=>s+bossPayroll(m),0), ctcTotal=members.reduce((s,m)=>s+ctcPayroll(m),0);
@@ -223,7 +223,7 @@ function memberForm(m={}) {
     <div class="field"><label for="mSect">Môn phái acc chính</label><select id="mSect" name="sect"><option value="">-- Chọn môn phái --</option>${SECTS.map(s=>`<option ${m.sect===s?"selected":""}>${s}</option>`).join("")}</select></div>
     <div class="field"><label for="mGuild">Bang</label><select id="mGuild" name="guild">${GUILDS.map(g=>`<option ${m.guild===g?"selected":""}>${g}</option>`).join("")}</select></div>
     <div class="field"><label for="mRole">Chức vụ</label><input id="mRole" name="role" value="${esc(m.role||"Thành viên")}"></div>
-    <div class="field"><label for="mVehicles">Số xe / tài khoản</label><input id="mVehicles" name="vehicles" type="number" min="1" max="20" value="${m.vehicles||1}"></div>
+    <div class="field"><label for="mVehicles">Số acc</label><input id="mVehicles" name="vehicles" type="number" min="1" max="20" value="${m.vehicles||1}"></div>
     <div class="field"><label for="mCoefBoss">Hệ số lương Boss</label><input id="mCoefBoss" name="coefBoss" type="number" min="0" step="0.1" value="${Number(m.coefBoss??m.coef??1)}"></div>
     <div class="field"><label for="mCoefCtc">Hệ số lương CTC</label><input id="mCoefCtc" name="coefCtc" type="number" min="0" step="0.1" value="${Number(m.coefCtc??m.coef??1)}"></div>
     <div class="field full" style="grid-column:1/-1"><label>Acc phụ — nhập thông tin riêng cho từng nhân vật</label><div id="secondaryAccountFields">${secondaryFields}</div><button type="button" class="btn btn-small" id="addSecondaryAccount">＋ Thêm acc phụ</button></div>
