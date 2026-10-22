@@ -1,0 +1,34 @@
+// THÊM đoạn match này VÀO TRONG match /databases/{database}/documents,
+// đặt TRƯỚC catch-all deny. GIỮ NGUYÊN users và members rules đang hoạt động.
+// Cần có sẵn hàm isAdmin() từ rules hiện tại.
+match /joinRequests/{userId} {
+  allow read: if request.auth != null
+    && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+
+  allow create: if request.auth != null
+    && request.auth.uid == userId
+    && exists(/databases/$(database)/documents/users/$(userId))
+    && get(/databases/$(database)/documents/users/$(userId)).data.status == 'active'
+    && request.resource.data.keys().hasOnly(['uid','zalo','character','guild','sect','vehicles','secondaryAccounts','status','createdAt'])
+    && request.resource.data.keys().hasAll(['uid','zalo','character','guild','sect','vehicles','secondaryAccounts','status','createdAt'])
+    && request.resource.data.uid == userId
+    && request.resource.data.status == 'pending'
+    && request.resource.data.createdAt == request.time
+    && request.resource.data.zalo is string && request.resource.data.zalo.size() > 0 && request.resource.data.zalo.size() <= 100
+    && request.resource.data.character is string && request.resource.data.character.size() > 0 && request.resource.data.character.size() <= 100
+    && request.resource.data.guild in ['Đại Đế','Nhị Đế','Tam Đế','Chấp Niệm']
+    && request.resource.data.sect is string && request.resource.data.sect.size() > 0 && request.resource.data.sect.size() <= 60
+    && request.resource.data.vehicles is int && request.resource.data.vehicles >= 1 && request.resource.data.vehicles <= 20
+    && request.resource.data.secondaryAccounts is list && request.resource.data.secondaryAccounts.size() <= 20;
+
+  allow update: if isAdmin()
+    && resource.data.status == 'pending'
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reason','reviewedAt','reviewedBy'])
+    && request.resource.data.status in ['approved','rejected']
+    && request.resource.data.reason is string
+    && request.resource.data.reason.size() <= 300
+    && request.resource.data.reviewedAt == request.time
+    && request.resource.data.reviewedBy == request.auth.uid;
+  allow delete: if false;
+}

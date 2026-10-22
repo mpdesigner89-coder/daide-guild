@@ -35,6 +35,7 @@ function showError(error) {
 }
 function setBusy(busy, label) {
   const submit = document.getElementById("modalSave");
+  if (!submit) return;
   submit.disabled = busy;
   submit.textContent = busy ? "Đang xử lý..." : label;
 }
@@ -68,28 +69,44 @@ function showLogin() {
   document.getElementById("firebaseLoginForm").addEventListener("submit", e => { e.preventDefault(); document.getElementById("modalSave").click(); });
 }
 function showRegister() {
-  openModal("Đăng ký thành viên Đại Đế", `<form id="firebaseRegisterForm" class="form-grid">${field("registerUsername", "Username (tài khoản đăng nhập)", "text", "username", "3–24 ký tự: chữ không dấu, số hoặc dấu _.")}${field("registerPassword", "Password (mật khẩu)", "password", "new-password")}${field("registerNickname", "Biệt danh", "text", "nickname", "Xin nhập đúng tên ingame.")}</form><p id="firebaseFormError" role="alert" style="color:#e57373"></p><div class="notice warn">Tài khoản mới chưa được cấp quyền quản trị. Không sử dụng chức năng demo để quản lý lương thật.</div><button class="btn" type="button" id="registerGoogle" style="width:100%;margin-top:12px">Đăng ký / đăng nhập bằng Google</button>`, () => {
-    const form = document.getElementById("firebaseRegisterForm");
-    if (!form.reportValidity()) return false;
-    const username = document.getElementById("registerUsername").value.trim();
-    const email = usernameEmail(username);
-    const password = document.getElementById("registerPassword").value;
-    const nickname = document.getElementById("registerNickname").value.trim();
-    if (!usernamePattern.test(username)) { document.getElementById("firebaseFormError").textContent = "Username phải dài 3–24 ký tự, chỉ gồm chữ không dấu, số hoặc dấu _."; return false; }
-    if (!nickname) return false;
-    setBusy(true, "Tạo tài khoản");
-    createUserWithEmailAndPassword(auth, email, password).then(async ({user}) => {
-      await updateProfile(user, {displayName: nickname});
-      try { await saveProfile(user, username, nickname); }
-      catch (e) { notify("Tạo tài khoản thành công nhưng chưa lưu hồ sơ Firestore. Cần thiết lập Security Rules."); }
-      closeModal(); notify("Đã đăng ký thành công. Hãy ghi nhớ username và mật khẩu; tài khoản username chưa hỗ trợ khôi phục bằng email.");
-    }).catch(showError).finally(() => setBusy(false, "Tạo tài khoản"));
+  const guilds=["Đại Đế","Nhị Đế","Tam Đế","Chấp Niệm"];
+  const sects=["Thiên Vương","Thiếu Lâm","Đường Môn","Ngũ Độc","Nga My","Thúy Yên","Cái Bang","Thiên Nhẫn","Võ Đang","Côn Lôn"];
+  const options=items=>items.map(v=>`<option value="${v}">${v}</option>`).join("");
+  const secondaryRow=()=>`<div class="secondary-account-form-row" style="border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0"><div class="field"><label>Tên acc phụ</label><input name="secondaryName" maxlength="80"></div><div class="field"><label>Bang</label><select name="secondaryGuild">${options(guilds)}</select></div><div class="field"><label>Môn phái</label><select name="secondarySect"><option value="">-- Chọn môn phái --</option>${options(sects)}</select></div><button type="button" class="btn btn-small" data-remove-register-secondary>− Xóa acc phụ</button></div>`;
+  openModal("Đăng ký thành viên Đại Đế", `<form id="firebaseRegisterForm" class="form-grid">
+    ${field("registerUsername","Username (tài khoản đăng nhập)","text","username","3–24 ký tự: chữ không dấu, số hoặc _.")}
+    ${field("registerPassword","Password (mật khẩu)","password","new-password")}
+    ${field("registerZalo","Tên Zalo / tên gọi","text","nickname")}
+    ${field("registerNickname","Biệt danh / Tên acc chính","text","nickname","Tên ingame của nhân vật chính")}
+    <div class="field"><label>Bang hội</label><select id="registerGuild">${options(guilds)}</select></div>
+    <div class="field"><label>Môn phái</label><select id="registerSect" required><option value="">-- Chọn môn phái --</option>${options(sects)}</select></div>
+    <div class="field"><label>Số xe / tài khoản</label><input id="registerVehicles" type="number" min="1" max="20" value="1" required></div>
+    <div class="field full" style="grid-column:1/-1"><label>Danh sách acc phụ</label><div id="registerSecondaryRows"></div><button type="button" class="btn btn-small" id="registerAddSecondary">＋ Thêm acc phụ</button></div>
+  </form><p id="firebaseFormError" role="alert" style="color:#e57373"></p><div class="notice warn">Hồ sơ gia nhập sẽ ở trạng thái Chờ duyệt, hiển thị công khai cho các thành viên đã đăng nhập. Admin xét duyệt trước khi được chấm công và tính lương.</div>`, () => {
+    const form=document.getElementById("firebaseRegisterForm");
+    if(!form.reportValidity())return false;
+    const username=document.getElementById("registerUsername").value.trim();
+    if(!usernamePattern.test(username)){document.getElementById("firebaseFormError").textContent="Username phải gồm 3–24 ký tự chữ không dấu, số hoặc _.";return false;}
+    const nickname=document.getElementById("registerNickname").value.trim();
+    const zalo=document.getElementById("registerZalo").value.trim();
+    if(!nickname||!zalo)return false;
+    const secondaryAccounts=[...form.querySelectorAll(".secondary-account-form-row")].map(row=>({name:row.querySelector('[name="secondaryName"]').value.trim(),guild:row.querySelector('[name="secondaryGuild"]').value,sect:row.querySelector('[name="secondarySect"]').value})).filter(a=>a.name);
+    const registration={zalo,character:nickname,guild:document.getElementById("registerGuild").value,sect:document.getElementById("registerSect").value,vehicles:Number(document.getElementById("registerVehicles").value),secondaryAccounts};
+    setBusy(true,"Đang đăng ký...");
+    createUserWithEmailAndPassword(auth,usernameEmail(username),document.getElementById("registerPassword").value).then(async({user})=>{
+      await updateProfile(user,{displayName:nickname});
+      await saveProfile(user,username,nickname);
+      await window.DaiDeRegistration.submit(user.uid,registration);
+      closeModal();notify("Đăng ký thành công! Hồ sơ đã được gửi và đang chờ Admin duyệt.");
+    }).catch(e=>{const target=document.getElementById("firebaseFormError");if(target)target.textContent=e.code?errorMessage(e.code):`Lỗi lưu hồ sơ: ${e.message}. Nếu tài khoản đã tạo, hãy liên hệ Admin để hoàn tất yêu cầu.`;}).finally(()=>setBusy(false,"Đăng ký"));
     return false;
   });
-  setBusy(false, "Tạo tài khoản");
-  document.getElementById("firebaseRegisterForm").addEventListener("submit", e => { e.preventDefault(); document.getElementById("modalSave").click(); });
-  document.getElementById("registerGoogle").addEventListener("click", googleLogin);
+  setBusy(false,"Đăng ký và gửi xét duyệt");
+  document.getElementById("registerAddSecondary").addEventListener("click",()=>document.getElementById("registerSecondaryRows").insertAdjacentHTML("beforeend",secondaryRow()));
+  document.getElementById("registerSecondaryRows").addEventListener("click",e=>{if(e.target.closest("[data-remove-register-secondary]"))e.target.closest(".secondary-account-form-row").remove();});
+  document.getElementById("firebaseRegisterForm").addEventListener("submit",e=>{e.preventDefault();document.getElementById("modalSave").click();});
 }
+
 async function googleLogin() {
   try {
     const {user} = await signInWithPopup(auth, new GoogleAuthProvider());
