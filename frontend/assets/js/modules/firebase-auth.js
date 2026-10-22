@@ -1,7 +1,7 @@
 /** Firebase Authentication: đăng ký email, Google, đăng nhập và hồ sơ cơ bản. */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
@@ -38,13 +38,11 @@ function setBusy(busy, label) {
   submit.disabled = busy;
   submit.textContent = busy ? "Đang xử lý..." : label;
 }
-async function saveProfile(user, username, nickname, provider) {
-  // Tên tài khoản không phải định danh duy nhất cho tới khi có backend kiểm tra trùng.
-  await setDoc(doc(db, "users", user.uid), {
-    uid: user.uid, email: user.email || "", username: username || "",
-    nickname: nickname || user.displayName || "", provider,
-    role: "pending", createdAt: serverTimestamp()
-  }, { merge: true });
+async function saveProfile(user, username, nickname) {
+  const ref = doc(db, "users", user.uid);
+  const existing = await getDoc(ref);
+  if (existing.exists()) return; // Không ghi đè role của tài khoản đã có.
+  await setDoc(ref, {username, nickname, role:"member", status:"active", createdAt:serverTimestamp()});
 }
 const usernamePattern = /^[a-zA-Z0-9_]{3,24}$/;
 // Firebase Email/Password requires an email identifier. Username-only accounts use a
@@ -82,7 +80,7 @@ function showRegister() {
     setBusy(true, "Tạo tài khoản");
     createUserWithEmailAndPassword(auth, email, password).then(async ({user}) => {
       await updateProfile(user, {displayName: nickname});
-      try { await saveProfile(user, username, nickname, "password"); }
+      try { await saveProfile(user, username, nickname); }
       catch (e) { notify("Tạo tài khoản thành công nhưng chưa lưu hồ sơ Firestore. Cần thiết lập Security Rules."); }
       closeModal(); notify("Đã đăng ký thành công. Hãy ghi nhớ username và mật khẩu; tài khoản username chưa hỗ trợ khôi phục bằng email.");
     }).catch(showError).finally(() => setBusy(false, "Tạo tài khoản"));
@@ -102,7 +100,10 @@ async function googleLogin() {
       if (!nickname) { document.getElementById("firebaseFormError").textContent = "Vui lòng nhập tên ingame."; return false; }
       setBusy(true, "Lưu tên ingame");
       updateProfile(user, {displayName:nickname}).then(async () => {
-        try { await setDoc(doc(db,"users",user.uid), {uid:user.uid, email:user.email || "", nickname, provider:"google", role:"pending", updatedAt:serverTimestamp()}, {merge:true}); }
+        try { const ref=doc(db,"users",user.uid);
+          const existing=await getDoc(ref);
+          if (!existing.exists()) await setDoc(ref,{username:"",nickname,role:"member",status:"active",createdAt:serverTimestamp()});
+          else if(existing.data().nickname!==nickname) await updateProfile(user,{displayName:existing.data().nickname||nickname}); }
         catch (e) { notify("Đã cập nhật tên hiển thị nhưng chưa lưu được Firestore. Kiểm tra Security Rules."); }
         closeModal(); notify("Đăng nhập Google thành công.");
       }).catch(showError).finally(() => setBusy(false, "Lưu tên ingame"));

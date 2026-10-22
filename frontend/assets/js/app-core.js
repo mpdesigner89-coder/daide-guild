@@ -207,10 +207,12 @@ let modalAction=null;
    ================================================================ */
 function openModal(title, html, action) {
   document.getElementById("modalTitle").textContent=title;document.getElementById("modalContent").innerHTML=html;modalAction=action;
+  document.getElementById("modalSave").textContent = title === "Thêm thành viên" || title === "Sửa thành viên" ? "Lưu thành viên" : "Lưu dữ liệu mẫu";
   document.getElementById("modalBackdrop").classList.add("open");
 }
 function closeModal(){document.getElementById("modalBackdrop").classList.remove("open");modalAction=null;}
 function memberForm(m={}) {
+  if (!window.DaiDeMembers?.isAdmin()) { showToast("Chỉ Admin được quản lý thành viên."); return; }
   const edit=Boolean(m.id);
   const secondaryRows=(m.secondaryAccounts||[]).map(a=>({name:a.name||"",sect:a.sect||"",guild:a.guild||GUILDS[0],role:a.role||"Thành viên",vehicles:a.vehicles||1,coef:a.coef||1}));
   if(!secondaryRows.length) secondaryRows.push({name:"",sect:"",guild:GUILDS[0],role:"Thành viên",vehicles:1,coef:1});
@@ -228,7 +230,10 @@ function memberForm(m={}) {
   </form><div class="notice">Mỗi acc phụ có tên nhân vật, môn phái, bang, chức vụ, số xe/tài khoản và hệ số riêng giống các trường của acc chính. Có thể thêm hoặc xóa từng acc phụ.</div>`,()=>{
     const f=document.getElementById("memberForm");if(!f.reportValidity())return false;const d=new FormData(f);const secondaryAccounts=[...f.querySelectorAll(".secondary-account-form-row")].map(row=>({name:row.querySelector('[name="secondaryName"]').value.trim(),sect:row.querySelector('[name="secondarySect"]').value,guild:row.querySelector('[name="secondaryGuild"]').value,role:row.querySelector('[name="secondaryRole"]').value.trim()||"Thành viên",vehicles:Math.max(1,Number(row.querySelector('[name="secondaryVehicles"]').value)||1),coef:Math.max(0,Number(row.querySelector('[name="secondaryCoef"]').value)||0)})).filter(a=>a.name);const obj={zalo:d.get("zalo").trim(),character:d.get("character").trim(),sect:d.get("sect"),guild:d.get("guild"),role:d.get("role").trim()||"Thành viên",vehicles:Math.max(1,Number(d.get("vehicles"))||1),coef:Math.max(0,Number(d.get("coef"))||1),secondaryAccounts};
     obj.coefBoss=Math.max(0,Number(d.get("coefBoss"))||0);obj.coefCtc=Math.max(0,Number(d.get("coefCtc"))||0);delete obj.coef;
-    if(edit) Object.assign(m,obj); else members.push({id:nextId++,...obj,boss:[],ctc:[],paidBoss:"Chưa nhận",paidCtc:"Chưa nhận"});renderAll();showToast(edit?"Đã cập nhật thành viên trong bản demo.":"Đã thêm thành viên vào bản demo.");return true;
+    const record = edit ? {...m,...obj} : {id:Date.now()+Math.floor(Math.random()*1000),...obj,boss:[],ctc:[],paidBoss:"Chưa nhận",paidCtc:"Chưa nhận"};
+    const saveButton=document.getElementById("modalSave");saveButton.disabled=true;saveButton.textContent="Đang lưu...";
+    window.DaiDeMembers.save(record).then(()=>{closeModal();showToast(edit?"Đã cập nhật thành viên trên Firestore.":"Đã thêm thành viên lên Firestore.");}).catch(e=>{showToast("Không thể lưu Firestore: "+e.message);}).finally(()=>{saveButton.disabled=false;saveButton.textContent="Lưu thành viên";});
+    return false;
   });
   document.getElementById("addSecondaryAccount").addEventListener("click",()=>{const wrap=document.getElementById("secondaryAccountFields");const index=wrap.querySelectorAll(".secondary-account-form-row").length;wrap.insertAdjacentHTML("beforeend",secondaryAccountFormRow({name:"",sect:"",guild:GUILDS[0],role:"Thành viên",vehicles:1,coef:1},index));});
 }
@@ -281,7 +286,7 @@ document.addEventListener("click",e=>{
   if(target.dataset.ctcDay!==undefined){const day=Number(target.dataset.ctcDay);const list=members.map(m=>`<label data-ctc-member="${esc(memberSearchText(m))}" style="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px"><input type="checkbox" name="ctcPresent" value="${m.id}" ${m.ctc.includes(day)?"checked":""}> <span><strong>${esc(m.zalo)} · ${esc(m.character)}</strong><br><small class="muted">${esc(m.guild)} · ${esc(m.sect||"Chưa chọn môn phái")}</small></span></label>`).join("");openModal(`Chấm CTC · ${["Thứ Sáu","Thứ Bảy","Chủ Nhật"][day]}`,`<form id="ctcDayForm"><input class="search" id="ctcModalSearch" placeholder="Lọc thành viên, acc chính/phụ, bang, môn phái..."><div style="max-height:50vh;overflow:auto">${list}</div></form><div class="notice">Tìm thành viên rồi tích chọn người có mặt.</div>`,()=>{const selected=[...document.querySelectorAll('input[name="ctcPresent"]:checked')].map(x=>Number(x.value));members.forEach(m=>{m.ctc=m.ctc.filter(x=>x!==day);if(selected.includes(m.id))m.ctc.push(day);m.ctc=[...new Set(m.ctc)].sort();});renderAll();showToast("Đã cập nhật danh sách CTC.");return true;});document.getElementById("ctcModalSearch").addEventListener("input",e=>{const q=e.target.value.toLocaleLowerCase("vi");document.querySelectorAll("[data-ctc-member]").forEach(row=>row.hidden=!row.dataset.ctcMember.includes(q));});return;}
   if(target.dataset.editCtc){const m=members.find(x=>x.id===Number(target.dataset.editCtc));if(m)editMemberCtc(m);return;}
   if(target.dataset.editMember){const m=members.find(x=>x.id===Number(target.dataset.editMember));if(m)memberForm(m);return;}
-  if(target.dataset.deleteMember){const m=members.find(x=>x.id===Number(target.dataset.deleteMember));if(m&&confirm(`Xóa ${m.zalo} khỏi dữ liệu demo?`)){members=members.filter(x=>x.id!==m.id);renderAll();showToast("Đã xóa thành viên demo.");}return;}
+  if(target.dataset.deleteMember){const m=members.find(x=>x.id===Number(target.dataset.deleteMember));if(m&&window.DaiDeMembers?.isAdmin()&&confirm(`Xóa ${m.zalo} khỏi Firestore?`)){window.DaiDeMembers.remove(m.id).then(()=>showToast("Đã xóa thành viên.")).catch(e=>showToast("Không thể xóa: "+e.message));}else if(!window.DaiDeMembers?.isAdmin())showToast("Chỉ Admin được xóa thành viên.");return;}
   if(target.dataset.togglePaid){const [type,id]=target.dataset.togglePaid.split(":");const m=members.find(x=>x.id===Number(id));if(m){const key=type==="boss"?"paidBoss":"paidCtc";if(type==="boss"&&!isEligible(m)){m[key]="Chưa đạt KPI";showToast("Thành viên chưa đạt KPI Boss, không thể xác nhận nhận lương Boss.");}else{m[key]=m[key]==="Đã nhận"?"Chưa nhận":"Đã nhận";showToast(`Đã cập nhật trạng thái ${type.toUpperCase()} demo.`);}renderAll();}return;}
   if(target.dataset.approveExpense!==undefined){const i=Number(target.dataset.approveExpense);if(expenses[i]){expenses[i].approved=!expenses[i].approved;renderAll();showToast(expenses[i].approved?"Đã duyệt khoản chi.":"Đã chuyển khoản chi về chờ duyệt.");}return;}
   if(target.dataset.editFund){editFund(target.dataset.editFund);return;}

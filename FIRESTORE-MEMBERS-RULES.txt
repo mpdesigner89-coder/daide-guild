@@ -1,0 +1,9 @@
+// THÊM match này vào BÊN TRONG match /databases/{database}/documents
+// ngay TRƯỚC match /{document=**} đang chặn các dữ liệu khác.
+// Hàm isAdmin() đã có trong Rules hiện tại.
+match /members/{memberId} {
+  allow read: if request.auth != null
+    && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+  allow create, update, delete: if isAdmin();
+}
