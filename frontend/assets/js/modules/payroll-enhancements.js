@@ -15,8 +15,8 @@ renderPayroll = function() {
   if (!table) return;
   [...table.querySelectorAll("tr")].forEach(row => {
     const cells = row.querySelectorAll("td");
-    if (cells.length < 9) return;
-    const nameCell = cells[0];
+    if (cells.length < 10) return;
+    const nameCell = cells[1];
     const identity = nameCell.querySelector(".member-identity") || nameCell;
     const memberName = (identity.innerText || "").trim();
     const member = members.find(m => memberName.includes(m.zalo) || memberName.includes(m.character));
@@ -28,12 +28,12 @@ renderPayroll = function() {
     controls.innerHTML = `<button class="btn btn-small" data-new-complaint="${member.id}">Gửi khiếu nại</button>${pending ? `<button class="complaint-count" data-list-complaints="${member.id}">Đang có ${pending} khiếu nại đang chờ phê duyệt</button>` : complaints.length ? `<button class="btn btn-small" data-list-complaints="${member.id}">Xem khiếu nại (${complaints.length})</button>` : ""}`;
     nameCell.appendChild(controls);
 
-    const ctcCell = cells[4];
+    const ctcCell = cells[5];
     const ctcDetails = document.createElement("details");
     ctcDetails.className = "secondary-accounts";
     ctcDetails.innerHTML = `<summary>Xem công CTC</summary><div class="attendance-detail-wrap">${["Thứ Sáu","Thứ Bảy","Chủ Nhật"].map((day,i)=>`<div class="attendance-detail-day"><strong>${day} · Buổi tối</strong><div class="attendance-detail-slots"><span class="pill ${member.ctc.includes(i)?"green":"gray"}">${member.ctc.includes(i)?"Đã chấm công":"Chưa chấm công"}</span></div></div>`).join("")}</div>`;
     ctcCell.appendChild(ctcDetails);
-    const bossDetails = cells[1].querySelector("details");
+    const bossDetails = cells[2].querySelector("details");
     if (bossDetails) {
       const wrap = bossDetails.querySelector("div[style*='display:grid']");
       if (wrap) {
